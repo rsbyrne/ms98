@@ -1,60 +1,32 @@
 import sys, os
-everestPath = os.path.abspath('everest')
-if not everestPath in sys.path:
-    sys.path.insert(0, everestPath)
+import math
+from matplotlib.pyplot import get_cmap
+
+workDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+everestDir = os.path.join(workDir, 'everest')
+if not everestDir in sys.path:
+    sys.path.insert(0, everestDir)
+
+dataDir = os.path.join(workDir, 'data')
 
 import math
 import numpy as np
 
 from everest.h5anchor import Reader, Fetch
 F = lambda key: Fetch(f"*/{key}")
-reader = Reader('obsvisc', os.path.dirname(__file__))
+I = lambda key: Fetch(f"*/inputs/{key}")
+O = lambda key: Fetch(f"*/outputs/{key}")
+reader = Reader('obsvisc', dataDir)
 
 from everest.window import Canvas
 from everest.window.data import Data
 
-with reader.open():
-    groupkeys = tuple(reader.h5file.keys())
-paramkeys = (
-    'tauRef',
-    'f',
-    'aspect',
-    'etaDelta',
-    'etaRef',
-    'alpha',
-    'H',
-    'flux',
-    'kappa',
-    )
-datakeys = (
-    't',
-    'dt',
-    'Nu',
-    'Nu_freq',
-    'Nu_min',
-    'Nu_range',
-    'VRMS',
-    'strainRate_outer_av',
-    'strainRate_outer_min',
-    'strainRate_outer_range',
-    'stressAng_outer_av',
-    'stressAng_outer_min',
-    'stressAng_outer_range',
-    'stressRad_outer_av',
-    'stressRad_outer_min',
-    'stressRad_outer_range',
-    'temp_av',
-    'temp_min',
-    'temp_range',
-    'velAng_outer_av',
-    'velAng_outer_min',
-    'velAng_outer_range',
-    'velMag_range',
-    'visc_av',
-    'visc_min',
-    'visc_range',
-    'yieldFrac'
-    )
+from matplotlib.pyplot import get_cmap
+def colour(val, /, lLim = 0, uLim = 1, cmap = 'viridis'):
+    cmap = get_cmap(cmap)
+    norm = (val - lLim) / (uLim - lLim)
+    return cmap(norm)
 
 def highlight_case(f, aspect, tauRef, freq = 1):
 
@@ -63,7 +35,7 @@ def highlight_case(f, aspect, tauRef, freq = 1):
     cut = reader[
         (F('f') == f) \
         & (F('aspect') == aspect) \
-        & (F('temperatureField') == '_built_peaskauslu-thoesfthuec') \
+        & (F('temperatureField') == tF) \
         ]
     datas = sorted(reader[cut : ('tauRef', 't', 'Nu')].values())
     t, Nu = dict((tau, ds) for tau, *ds in datas)[tauRef]
